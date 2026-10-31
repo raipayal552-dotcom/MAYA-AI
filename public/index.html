@@ -1,0 +1,85 @@
+
+
+<!DOCTYPE html>
+<html lang="ne">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MAYA AI</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;padding:22px 16px;display:flex;justify-content:center;align-items:center;background:radial-gradient(ellipse at top,#29205b,#100f29 48%,#070914);color:#f7f4ff;font-family:system-ui,sans-serif}
+main{width:100%;max-width:440px;padding:25px 20px;border:1px solid #ffffff20;border-radius:30px;background:linear-gradient(155deg,#191731,#0d1022);box-shadow:0 25px 70px #0008}
+.top{display:flex;align-items:center;justify-content:space-between}
+.brand{font-size:25px;font-weight:800;letter-spacing:7px;color:#d7caff}
+.pill{font-size:10px;color:#c9f9e9;border:1px solid #53d6b544;border-radius:20px;padding:7px 10px}
+.sub{font-size:11px;letter-spacing:2px;color:#8885b5;margin-top:5px}
+.orb-wrap{height:220px;display:grid;place-items:center}
+.orb{width:142px;height:142px;border-radius:50%;background:radial-gradient(circle at 34% 28%,white,#d7c8ff 9%,#8c70ff 25%,#4d36d6 48%,#181641 72%);box-shadow:0 0 25px #8870ff99,0 0 65px #6751ff55;animation:float 4s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.status{text-align:center;font-size:11px;letter-spacing:3px;color:#a99aff}
+h2{font-size:20px;margin:24px 0 5px}
+.hint{font-size:13px;color:#9497b7;margin:0 0 18px}
+.inputbox{display:flex;gap:8px;align-items:center;padding:6px;border:1px solid #ffffff20;background:#090d1e;border-radius:17px}
+input{min-width:0;flex:1;border:0;outline:0;background:transparent;color:white;font-size:15px;padding:12px 8px}
+input::placeholder{color:#777d9e}
+button{cursor:pointer;border:0;color:white;font-size:14px;font-weight:650;border-radius:13px;padding:13px 15px}
+#send{background:linear-gradient(135deg,#a18aff,#6548e8)}
+#voice{width:100%;margin-top:10px;background:#ffffff09;border:1px solid #ffffff20}
+#answer{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.7;font-size:14px;text-align:left;padding:16px;margin-top:17px;min-height:74px;border-radius:16px;background:#ffffff07;border:1px solid #ffffff12;color:#e6e2ff}
+.footer{text-align:center;font-size:10px;color:#666b91;letter-spacing:2px;margin-top:20px}
+</style>
+</head>
+<body>
+<main>
+<div class="top"><div class="brand">MAYA</div><div class="pill">● AI ASSISTANT</div></div>
+<div class="sub">YOUR PERSONAL AI ASSISTANT</div>
+<div class="orb-wrap"><div class="orb"></div></div>
+<div class="status" id="status">● SYSTEM READY</div>
+<h2>नमस्ते! म MAYA हुँ।</h2>
+<p class="hint">तपाईंलाई के सहयोग गरूँ?</p>
+<div class="inputbox"><input id="message" placeholder="यहाँ सन्देश लेख्नुहोस्..." autocomplete="off"><button id="send">पठाउनुहोस्</button></div>
+<button id="voice">🎙️ आवाजबाट बोल्नुहोस्</button>
+<div id="answer">म तयार छु। मसँग कुरा सुरु गर्नुहोस्।</div>
+<div class="footer">MAYA AI · MOBILE</div>
+</main>
+<script>
+const msg=document.getElementById('message');
+const answer=document.getElementById('answer');
+const status=document.getElementById('status');
+const sendButton=document.getElementById('send');
+async function send(){
+ const message=msg.value.trim();
+ if(!message)return;
+ if(/youtube खोल|युट्युब खोल|open youtube|youtube khola/i.test(message)){window.location.href="https://www.youtube.com";return;}
+ sendButton.disabled=true;
+ answer.textContent='MAYA ले जवाफ दिँदैछ...';
+ status.textContent='● THINKING...';
+ try{
+  const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message})});
+  const data=await r.json();
+  if(!r.ok)throw new Error(data.error||'सर्भरमा समस्या भयो।');
+  answer.textContent=data.reply||'जवाफ आएन।';
+  if(data.reply&&window.speechSynthesis){
+   window.speechSynthesis.cancel();
+   const u=new SpeechSynthesisUtterance(data.reply);
+   u.lang='ne-NP';
+   window.speechSynthesis.speak(u);
+  }
+ }catch(e){answer.textContent='त्रुटि: '+e.message}
+ finally{status.textContent='● SYSTEM READY';sendButton.disabled=false}
+}
+sendButton.addEventListener('click',send);
+msg.addEventListener('keydown',e=>{if(e.key==='Enter')send()});
+document.getElementById('voice').addEventListener('click',()=>{
+ const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+ if(!SR){answer.textContent='यो ब्राउजरमा आवाज पहिचान उपलब्ध छैन।';return}
+ const rec=new SR();
+ rec.lang='ne-NP';
+ rec.onstart=()=>status.textContent='● LISTENING...';
+ rec.onresult=e=>{msg.value=e.results[0][0].transcript;send()};
+ rec.onerror=()=>{answer.textContent='माइक्रोफोन अनुमति जाँच गर्नुहोस्।';status.textContent='● SYSTEM READY'};
+ rec.onend=()=>{if(status.textContent==='● LISTENING...')status.textContent='● SYSTEM READY'};
+ rec.start();
+});
+</script>

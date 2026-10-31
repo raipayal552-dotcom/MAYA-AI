@@ -1,0 +1,13 @@
+.env
+node_modules/
+android/local.properties
+android/.gradle/
+android/app/build/
+*.backup*
+*.bak
+*.safe
+*earch*
+public/index-before-wake.html
+public/index-broken-backup.html
+public/index-backup.html
+maya_step.txt
